@@ -187,7 +187,7 @@ cython_debug/
 
 /docs
 mkdocs.yml
-/notebooks
+
 /models
 /logs
 
