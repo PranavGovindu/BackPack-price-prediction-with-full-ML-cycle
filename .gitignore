@@ -192,5 +192,4 @@ mkdocs.yml
 /logs
 
 /data
-notebooks/*
-!notebooks/.gitkeep
+/notebooks
