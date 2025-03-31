@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "src"  # ✅ Since 'src/' is the package, this must match
+version = "0.1.0"
+description = "Streamlit deployment"
+authors = [{ name = "Pranav" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License"
+]
+requires-python = ">=3.10,<=3.11.11"  # ✅ Better version range
+dependencies = []
+
+[tool.flit.module]
+name = "src"  # ✅ Fixed missing closing quote
+
+[tool.ruff]
+line-length = 99
+src = ["src"]  # ✅ Use "src" instead of "st_1" (assuming src contains sub-packages)
+include = ["pyproject.toml", "src/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Enable import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]  # ✅ Changed from "st_1" to "src"
+force-sort-within-sections = true
