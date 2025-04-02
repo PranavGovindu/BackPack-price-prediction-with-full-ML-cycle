@@ -1,0 +1,61 @@
+# Data parameters
+data:
+  train_path: ${S3_BUCKET}/train.csv
+  test_path: ${S3_BUCKET}/test.csv
+  bucket_name: "rain-1"
+  region: "eu-north-1"
+  
+# Preprocessing parameters
+preprocessing:
+  test_size: 0.2
+  random_state: 42
+  handle_missing: True
+  handle_outliers: True
+  outlier_strategy: "winsorize"
+  outlier_columns:
+    - "Weight Capacity (kg)"
+    - "Weight_Capacity_Ratio"
+    - "Weight_to_Compartments"
+    - "Compartments"
+    - "Brand_Avg_Capacity"
+    - "Capacity_vs_Brand_Avg"
+
+# Feature engineering parameters
+feature_engineering:
+  create_text_features: True
+  create_interaction_features: True
+  create_binary_features: True
+  create_binning_features: True
+  create_ratio_features: True
+  create_log_transforms: True
+  create_aggregation_features: True
+
+# Model parameters
+model:
+  name: "random_forest"
+  random_state: 42
+  hyperparameters:
+    n_estimators: 235
+    max_depth: 20
+    min_samples_split: 5
+    min_samples_leaf: 10
+    max_features: "log2"
+    bootstrap: True
+
+# Model evaluation
+evaluation:
+  cv_folds: 5
+  metrics:
+    - "rmse"
+    - "mae"
+    - "r2"
+
+# MLflow parameters
+mlflow:
+  experiment_name: "backpack_price_prediction"
+  model_name: "random_forest_regressor"
+  run_name: "rf_model_training"
+  register_model: True
+  model_production_alias: "production"
+  model_staging_alias: "staging"
+  artifact_path: "models"
