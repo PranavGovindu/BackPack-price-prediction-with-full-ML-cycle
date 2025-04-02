@@ -188,11 +188,11 @@ cython_debug/
 /docs
 mkdocs.yml
 
-/models
-/logs
+models/
+logs/
 
-/notebooks
-/artifacts
-/metrics
-/mlruns
-/data
+notebooks/
+artifacts/
+metrics/
+mlruns/
+data/

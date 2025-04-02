@@ -52,9 +52,9 @@ evaluation:
 
 # MLflow parameters
 mlflow:
-  experiment_name: "backpack_price_prediction"
-  model_name: "random_forest_regressor"
-  run_name: "rf_model_prod"
+  experiment_name: "random_forest_experiment"
+  model_name: "tree"
+  run_name: "languid-hog-30"
   register_model: True
   model_production_alias: "production"
   model_staging_alias: "staging"
