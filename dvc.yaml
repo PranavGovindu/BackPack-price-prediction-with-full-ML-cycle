@@ -1,0 +1,46 @@
+stages:
+  model_training:
+    cmd: python src/modelbuild/model_training.py
+    deps:
+    - src/modelbuild/model_training.py
+    - data/featured/train_featured.csv
+    params:
+    - model
+    - evaluation
+    - mlflow
+    outs:
+    - models/trained_model.pkl
+
+  model_evaluation:
+    cmd: python src/modelbuild/model_evaluation.py
+    deps:
+    - src/modelbuild/model_evaluation.py
+    - models/trained_model.pkl
+    - data/featured/train_featured.csv
+    - data/featured/test_featured.csv
+    params:
+    - evaluation
+    - mlflow
+    metrics:
+    - metrics/evaluation_metrics.json:
+        cache: false
+
+  model_registry:
+    cmd: python src/modelbuild/model_registry.py
+    deps:
+    - src/modelbuild/model_registry.py
+    - models/trained_model.pkl
+    - metrics/evaluation_metrics.json
+    params:
+    - mlflow
+    outs:
+    - artifacts/model_info.json
+
+  model_pull:
+    cmd: python src/modelbuild/model_pull.py
+    deps:
+    - src/modelbuild/model_pull.py
+    params:
+    - mlflow
+    outs:
+    - models/production_model.pkl

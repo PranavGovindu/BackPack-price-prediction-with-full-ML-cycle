@@ -62,7 +62,7 @@ def prepare_data(train_df, test_df, preprocessor):
     X_test = test_df.drop(['id'], axis=1, errors='ignore')
     
     # Transform data
-    X_train_processed = preprocessor.transform(X_train)
+    X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
     
     return X_train_processed, y_train, X_test_processed
@@ -85,41 +85,7 @@ def evaluate_model(model, X, y, dataset_name="train"):
         f"{dataset_name}_r2": r2
     }
 
-def generate_feature_importance(model, preprocessor, X_train):
-    """Generate feature importance analysis"""
-    logger.info("Generating feature importance analysis")
-    
-    if not hasattr(model, 'feature_importances_'):
-        logger.warning("Model does not have feature_importances_ attribute")
-        return {}
-    
-    # Get feature names
-    cat_cols = preprocessor.transformers_[1][1].get_feature_names_out().tolist()
-    num_cols = X_train.columns[preprocessor.transformers_[0][2]].tolist()
-    
-    # Map importances to features
-    feature_importances = model.feature_importances_
-    
-    importance_dict = {}
-    total_features = len(num_cols) + len(cat_cols)
-    
-    if len(feature_importances) == total_features:
-        # Simple case - direct mapping
-        all_features = num_cols + cat_cols
-        for feature, importance in zip(all_features, feature_importances):
-            importance_dict[feature] = float(importance)
-    else:
-        # More complex case - need to handle transformed features
-        logger.warning("Feature count mismatch. Using simplified feature importance.")
-        importance_dict = {f"feature_{i}": float(importance) for i, importance in enumerate(feature_importances)}
-    
-    # Sort by importance
-    sorted_importances = dict(sorted(importance_dict.items(), key=lambda item: item[1], reverse=True))
-    
-    # Get top 10 features
-    top_features = {k: sorted_importances[k] for k in list(sorted_importances)[:10]}
-    
-    return top_features
+
 
 if __name__ == "__main__":
     logger.info("Starting model evaluation process")
@@ -156,11 +122,7 @@ if __name__ == "__main__":
             mlflow.log_metric(metric_name, metric_value)
         
         # Generate feature importance
-        feature_importances = generate_feature_importance(model, preprocessor, train_df.drop(['Price', 'id'], axis=1, errors='ignore'))
         
-        # Log feature importances
-        for feature, importance in feature_importances.items():
-            mlflow.log_metric(f"importance_{feature.replace(' ', '_')}", importance)
         
         # Generate test predictions (if applicable)
         test_predictions = model.predict(X_test_processed)
@@ -180,7 +142,7 @@ if __name__ == "__main__":
         # Save evaluation metrics
         metrics = {
             **train_metrics,
-            "top_features": feature_importances
+          
         }
         
         metrics_path = os.path.join("metrics", "evaluation_metrics.json")

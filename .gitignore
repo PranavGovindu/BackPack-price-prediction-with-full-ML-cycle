@@ -191,5 +191,8 @@ mkdocs.yml
 /models
 /logs
 
-/data
 /notebooks
+/artifacts
+/metrics
+/mlruns
+/data

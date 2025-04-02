@@ -1,0 +1,114 @@
+schema: '2.0'
+stages:
+  model_training:
+    cmd: python src/modelbuild/model_training.py
+    deps:
+    - path: data/featured/train_featured.csv
+      hash: md5
+      md5: 025e217e13aed7466e8db35cd4982e50
+      size: 77592290
+    - path: src/modelbuild/model_training.py
+      hash: md5
+      md5: c85ce19c59fe1e25830821f76b1ba27e
+      size: 7017
+    params:
+      params.yaml:
+        evaluation:
+          cv_folds: 5
+          metrics:
+          - rmse
+          - mae
+          - r2
+        mlflow:
+          experiment_name: backpack_price_prediction
+          model_name: random_forest_regressor
+          run_name: rf_model_prod
+          register_model: true
+          model_production_alias: production
+          model_staging_alias: staging
+          artifact_path: models
+        model:
+          name: random_forest
+          random_state: 42
+          hyperparameters:
+            n_estimators: 235
+            max_depth: 20
+            min_samples_split: 5
+            min_samples_leaf: 10
+            max_features: log2
+            bootstrap: true
+    outs:
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+  model_evaluation:
+    cmd: python src/modelbuild/model_evaluation.py
+    deps:
+    - path: data/featured/test_featured.csv
+      hash: md5
+      md5: c1ed471294119110ebe2a68a038b0d18
+      size: 49961041
+    - path: data/featured/train_featured.csv
+      hash: md5
+      md5: 025e217e13aed7466e8db35cd4982e50
+      size: 77592290
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+    - path: src/modelbuild/model_evaluation.py
+      hash: md5
+      md5: 6373d3220fbf983428168e9866075388
+      size: 5136
+    params:
+      params.yaml:
+        evaluation:
+          cv_folds: 5
+          metrics:
+          - rmse
+          - mae
+          - r2
+        mlflow:
+          experiment_name: backpack_price_prediction
+          model_name: random_forest_regressor
+          run_name: rf_model_prod
+          register_model: true
+          model_production_alias: production
+          model_staging_alias: staging
+          artifact_path: models
+    outs:
+    - path: metrics/evaluation_metrics.json
+      hash: md5
+      md5: 1999281261ef1a2fd6765d97a60fc4ef
+      size: 117
+  model_registry:
+    cmd: python src/modelbuild/model_registry.py
+    deps:
+    - path: metrics/evaluation_metrics.json
+      hash: md5
+      md5: 1999281261ef1a2fd6765d97a60fc4ef
+      size: 117
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+    - path: src/modelbuild/model_registry.py
+      hash: md5
+      md5: 8e8745fa06d1c572171cc8067d0e126d
+      size: 5020
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: backpack_price_prediction
+          model_name: random_forest_regressor
+          run_name: rf_model_prod
+          register_model: true
+          model_production_alias: production
+          model_staging_alias: staging
+          artifact_path: models
+    outs:
+    - path: artifacts/model_info.json
+      hash: md5
+      md5: 21275e7f85e5fd0de6f9be3cdd422a59
+      size: 301
