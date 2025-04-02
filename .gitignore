@@ -195,5 +195,7 @@ notebooks/
 artifacts/
 metrics/
 mlruns/
-data/
+/data/
 /data
+
+data.dvc
