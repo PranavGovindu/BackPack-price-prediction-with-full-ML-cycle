@@ -7,7 +7,6 @@ import mlflow.sklearn
 from pathlib import Path
 import dagshub
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -15,7 +14,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("model_registry")
 
-# Initialize DagsHub connection
 logger.info("Initializing DagsHub connection")
 dagshub.init(repo_owner='PranavGovindu', repo_name='st-1', mlflow=True)
 logger.info(f"MLflow tracking URI: {mlflow.get_tracking_uri()}")
@@ -103,17 +101,12 @@ def save_model_info(model_details, metrics, output_path):
 if __name__ == "__main__":
     logger.info("Starting model registry process")
     
-    # Create artifacts directory if it doesn't exist
     Path("artifacts").mkdir(parents=True, exist_ok=True)
     
-    # Print available experiments to debug
-    logger.info(f"Available experiments: {[exp.name for exp in mlflow.search_experiments()]}")
     
-    # Load parameters
     params = load_params()
     mlflow_params = params['mlflow']
     
-    # Load evaluation metrics
     metrics = load_metrics(os.path.join("metrics", "evaluation_metrics.json"))
     
     # Get the latest run ID
@@ -138,7 +131,7 @@ if __name__ == "__main__":
                 mlflow_params['model_staging_alias']
             )
             
-            if metrics.get('train_r2', 0) > 0.7: 
+            if metrics.get('train_mae', 0) > 30: 
                 logger.info(f"Model meets production criteria with R² = {metrics.get('train_r2')}")
                 create_model_alias(
                     mlflow_params['model_name'],

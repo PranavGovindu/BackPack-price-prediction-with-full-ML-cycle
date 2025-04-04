@@ -1,10 +1,12 @@
+# params.yaml
+
 # Data parameters
 data:
-  train_path: ${S3_BUCKET}/train.csv
-  test_path: ${S3_BUCKET}/test.csv
+  train_path: ${S3_BUCKET}/train.csv 
+  test_path: ${S3_BUCKET}/test.csv  
   bucket_name: "rain-1"
   region: "eu-north-1"
-  
+
 # Preprocessing parameters
 preprocessing:
   test_size: 0.2
@@ -50,12 +52,14 @@ evaluation:
     - "mae"
     - "r2"
 
-# MLflow parameters
+# MLflow configuration
 mlflow:
-  experiment_name: "random_forest_experiment"
+  tracking_uri: https://dagshub.com/PranavGovindu/st-1.mlflow
   model_name: "tree"
-  run_name: "languid-hog-30"
-  register_model: True
   model_production_alias: "production"
   model_staging_alias: "staging"
+  # model_staging_version: 4 # Removed, will use aliases
+  experiment_name: "random_forest_experiment"
+  run_name: "languid-hog-30" 
+  register_model: true
   artifact_path: "models"

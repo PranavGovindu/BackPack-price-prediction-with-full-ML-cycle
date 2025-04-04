@@ -11,7 +11,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, cross_val_score, KFold
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -48,16 +47,13 @@ def prepare_train_validation_data(df, preprocessor, test_size=0.2, random_state=
     """Prepare training and validation data"""
     logger.info("Preparing training and validation data")
     
-    # Split features and target
     X = df.drop(['Price', 'id'], axis=1, errors='ignore')
     y = df['Price']
     
-    # Split into train and validation sets
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=test_size, random_state=random_state
     )
     
-    # Transform data using preprocessor
     X_train_processed = preprocessor.fit_transform(X_train)
     X_val_processed = preprocessor.transform(X_val)
     
@@ -158,7 +154,6 @@ if __name__ == "__main__":
         model = train_model(X_train_processed, y_train, model_params)
         
         # Evaluate on validation set
-        # Evaluate on validation set
         val_rmse, val_mae, val_r2, _ = evaluate_model(model, X_val_processed, y_val)
         logger.info(f"Validation RMSE: {val_rmse:.4f}, MAE: {val_mae:.4f}, R²: {val_r2:.4f}")
         
@@ -177,11 +172,7 @@ if __name__ == "__main__":
         mlflow.log_metric("cv_rmse", cv_rmse)
         mlflow.log_metric("cv_rmse_std", cv_rmse_std)
         
-        # Log feature importance
-        if hasattr(model, 'feature_importances_'):
-            importances = model.feature_importances_
-            mlflow.log_param("top_feature_index", int(np.argmax(importances)))
-            mlflow.log_param("top_feature_importance", float(np.max(importances)))
+
         
         # Log the model
         mlflow.sklearn.log_model(

@@ -1,0 +1,223 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python src/data_processing/data_ingestion.py
+    deps:
+    - path: src/data_processing/data_ingestion.py
+      hash: md5
+      md5: 68124945fd4d9b9a934ce3ff0506c37e
+      size: 2842
+    params:
+      params.yaml:
+        data.bucket_name: rain-1
+        data.region: eu-north-1
+        data.test_path: ${S3_BUCKET}/test.csv
+        data.train_path: ${S3_BUCKET}/train.csv
+    outs:
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 3518aac60edd1ff755517b2e1b1f4095
+      size: 14075200
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 9468e19897ea2df29d47b2ce2b5a2bca
+      size: 23755468
+  data_preprocessing:
+    cmd: python src/data_processing/data_preprocessing.py
+    deps:
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 3518aac60edd1ff755517b2e1b1f4095
+      size: 14075200
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 9468e19897ea2df29d47b2ce2b5a2bca
+      size: 23755468
+    - path: src/data_processing/data_preprocessing.py
+      hash: md5
+      md5: 5db20dc6858e4f8a4835bbec36b7d251
+      size: 6222
+    params:
+      params.yaml:
+        preprocessing.handle_missing: true
+        preprocessing.handle_outliers: true
+        preprocessing.outlier_columns:
+        - Weight Capacity (kg)
+        - Weight_Capacity_Ratio
+        - Weight_to_Compartments
+        - Compartments
+        - Brand_Avg_Capacity
+        - Capacity_vs_Brand_Avg
+        preprocessing.outlier_strategy: winsorize
+        preprocessing.random_state: 42
+        preprocessing.test_size: 0.2
+    outs:
+    - path: data/processed/test_preprocessed.csv
+      hash: md5
+      md5: 98dbec619c288dd15084b14c71248bb6
+      size: 14492559
+    - path: data/processed/train_preprocessed.csv
+      hash: md5
+      md5: a879a24e6a4c0262c6607e6e914fd872
+      size: 24459605
+  feature_engineering:
+    cmd: python src/feature_eng/feature_engineering.py
+    deps:
+    - path: data/processed/test_preprocessed.csv
+      hash: md5
+      md5: 98dbec619c288dd15084b14c71248bb6
+      size: 14492559
+    - path: data/processed/train_preprocessed.csv
+      hash: md5
+      md5: a879a24e6a4c0262c6607e6e914fd872
+      size: 24459605
+    - path: src/feature_eng/feature_engineering.py
+      hash: md5
+      md5: cbb4ffe90aeef154d275723cfcd02424
+      size: 8128
+    params:
+      params.yaml:
+        feature_engineering:
+          create_text_features: true
+          create_interaction_features: true
+          create_binary_features: true
+          create_binning_features: true
+          create_ratio_features: true
+          create_log_transforms: true
+          create_aggregation_features: true
+    outs:
+    - path: artifacts/preprocessor.pkl
+      hash: md5
+      md5: 54ac4a73c4ae7c378dc064842ce78dc7
+      size: 1444
+    - path: data/featured/test_featured.csv
+      hash: md5
+      md5: c1ed471294119110ebe2a68a038b0d18
+      size: 49961041
+    - path: data/featured/train_featured.csv
+      hash: md5
+      md5: 025e217e13aed7466e8db35cd4982e50
+      size: 77592290
+  model_training:
+    cmd: python src/modelbuild/model_training.py
+    deps:
+    - path: artifacts/preprocessor.pkl
+      hash: md5
+      md5: 54ac4a73c4ae7c378dc064842ce78dc7
+      size: 1444
+    - path: data/featured/train_featured.csv
+      hash: md5
+      md5: 025e217e13aed7466e8db35cd4982e50
+      size: 77592290
+    - path: src/modelbuild/model_training.py
+      hash: md5
+      md5: 3fec20fda4ed2432e5c6bffd77a095ee
+      size: 6541
+    params:
+      params.yaml:
+        evaluation:
+          cv_folds: 5
+          metrics:
+          - rmse
+          - mae
+          - r2
+        mlflow:
+          tracking_uri: https://dagshub.com/PranavGovindu/st-1.mlflow
+          model_name: tree
+          model_production_alias: production
+          model_staging_alias: staging
+          experiment_name: random_forest_experiment
+          run_name: languid-hog-30
+          register_model: true
+          artifact_path: models
+        model:
+          name: random_forest
+          random_state: 42
+          hyperparameters:
+            n_estimators: 235
+            max_depth: 20
+            min_samples_split: 5
+            min_samples_leaf: 10
+            max_features: log2
+            bootstrap: true
+    outs:
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+  model_evaluation:
+    cmd: python src/modelbuild/model_evaluation.py
+    deps:
+    - path: artifacts/preprocessor.pkl
+      hash: md5
+      md5: 54ac4a73c4ae7c378dc064842ce78dc7
+      size: 1444
+    - path: data/featured/test_featured.csv
+      hash: md5
+      md5: c1ed471294119110ebe2a68a038b0d18
+      size: 49961041
+    - path: data/featured/train_featured.csv
+      hash: md5
+      md5: 025e217e13aed7466e8db35cd4982e50
+      size: 77592290
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+    - path: src/modelbuild/model_evaluation.py
+      hash: md5
+      md5: 9e9c710e78dba0806df603ca73935687
+      size: 4329
+    params:
+      params.yaml:
+        evaluation:
+          cv_folds: 5
+          metrics:
+          - rmse
+          - mae
+          - r2
+        mlflow:
+          tracking_uri: https://dagshub.com/PranavGovindu/st-1.mlflow
+          model_name: tree
+          model_production_alias: production
+          model_staging_alias: staging
+          experiment_name: random_forest_experiment
+          run_name: languid-hog-30
+          register_model: true
+          artifact_path: models
+    outs:
+    - path: metrics/evaluation_metrics.json
+      hash: md5
+      md5: 1999281261ef1a2fd6765d97a60fc4ef
+      size: 117
+  model_registry:
+    cmd: python src/modelbuild/model_registry.py
+    deps:
+    - path: metrics/evaluation_metrics.json
+      hash: md5
+      md5: 1999281261ef1a2fd6765d97a60fc4ef
+      size: 117
+    - path: models/trained_model.pkl
+      hash: md5
+      md5: f4412b8e8081fb555211153991b544dc
+      size: 207905116
+    - path: src/modelbuild/model_registry.py
+      hash: md5
+      md5: 91619a60edb25ddbb2d0a5a7e9a96b32
+      size: 5462
+    params:
+      params.yaml:
+        mlflow:
+          tracking_uri: https://dagshub.com/PranavGovindu/st-1.mlflow
+          model_name: tree
+          model_production_alias: production
+          model_staging_alias: staging
+          experiment_name: random_forest_experiment
+          run_name: languid-hog-30
+          register_model: true
+          artifact_path: models
+    outs:
+    - path: artifacts/model_info.json
+      hash: md5
+      md5: 960b9b236bbecfd7f0266ba1ae2a3959
+      size: 284

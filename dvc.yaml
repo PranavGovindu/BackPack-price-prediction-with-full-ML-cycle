@@ -1,0 +1,94 @@
+stages:
+  data_ingestion:
+    cmd: python src/data_processing/data_ingestion.py # Corrected path
+    deps:
+      - src/data_processing/data_ingestion.py # Corrected path
+    params:
+      - data.bucket_name
+      - data.region
+      - data.train_path
+      - data.test_path
+    outs:
+      - data/raw/train.csv
+      - data/raw/test.csv
+
+  data_preprocessing:
+    cmd: python src/data_processing/data_preprocessing.py # Corrected path
+    deps:
+      - src/data_processing/data_preprocessing.py # Corrected path
+      - data/raw/train.csv
+      - data/raw/test.csv
+    params:
+      - preprocessing.test_size
+      - preprocessing.random_state
+      - preprocessing.handle_missing
+      - preprocessing.handle_outliers
+      - preprocessing.outlier_strategy
+      - preprocessing.outlier_columns
+    outs:
+      - data/processed/train_preprocessed.csv
+      - data/processed/test_preprocessed.csv
+
+  feature_engineering:
+    cmd: python src/feature_eng/feature_engineering.py # Corrected path
+    deps:
+      - src/feature_eng/feature_engineering.py # Corrected path
+      - data/processed/train_preprocessed.csv
+      - data/processed/test_preprocessed.csv
+    params:
+      - feature_engineering
+    outs:
+      - data/featured/train_featured.csv
+      - data/featured/test_featured.csv
+      - artifacts/preprocessor.pkl
+
+  model_training:
+    cmd: python src/modelbuild/model_training.py # Corrected path
+    deps:
+      - src/modelbuild/model_training.py # Corrected path
+      - data/featured/train_featured.csv
+      - artifacts/preprocessor.pkl # Added dependency (likely needed)
+    params:
+      - model
+      - evaluation # Note: evaluation params might be more relevant in model_evaluation stage
+      - mlflow
+    outs:
+      - models/trained_model.pkl
+
+  model_evaluation:
+    cmd: python src/modelbuild/model_evaluation.py # Corrected path
+    deps:
+      - src/modelbuild/model_evaluation.py # Corrected path
+      - models/trained_model.pkl
+      - data/featured/train_featured.csv # Needed for evaluating on train data if done
+      - data/featured/test_featured.csv  # Needed for evaluating on test data
+      - artifacts/preprocessor.pkl # Added dependency (likely needed to process test data)
+    params:
+      - evaluation
+      - mlflow
+    metrics:
+      - metrics/evaluation_metrics.json:
+          cache: false
+    # Implicit output (often logged via MLflow): metrics/predictions.csv
+
+  model_registry:
+    cmd: python src/modelbuild/model_registry.py # Corrected path
+    deps:
+      - src/modelbuild/model_registry.py # Corrected path
+      - models/trained_model.pkl
+      - metrics/evaluation_metrics.json
+    params:
+      - mlflow
+    outs:
+      - artifacts/model_info.json # Note: This file was NOT present in your ls output. Ensure the script actually creates it.
+
+  model_pull:
+    cmd: python src/modelbuild/model_pull.py # Corrected path
+    deps:
+      - src/modelbuild/model_pull.py # Corrected path
+      # This stage might implicitly depend on the model registry stage via MLflow tags/versions
+      # or explicitly on artifacts/model_info.json if it were present and used.
+    params:
+      - mlflow
+    outs:
+      - models/production_model.pkl

@@ -10,7 +10,6 @@ import mlflow.sklearn
 from pathlib import Path
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -54,11 +53,9 @@ def prepare_data(train_df, test_df, preprocessor):
     """Prepare data for evaluation"""
     logger.info("Preparing data for evaluation")
     
-    # Extract features and target from training data
     X_train = train_df.drop(['Price', 'id'], axis=1, errors='ignore')
     y_train = train_df['Price']
     
-    # Extract features from test data
     X_test = test_df.drop(['id'], axis=1, errors='ignore')
     
     # Transform data
@@ -90,24 +87,19 @@ def evaluate_model(model, X, y, dataset_name="train"):
 if __name__ == "__main__":
     logger.info("Starting model evaluation process")
     
-    # Load parameters
     params = load_params()
     mlflow_params = params['mlflow']
     
-    # Create directories
     create_directories()
     
-    # Load model and preprocessor
     model = load_model(os.path.join("models", "trained_model.pkl"))
     preprocessor = load_preprocessor(os.path.join("artifacts", "preprocessor.pkl"))
     
-    # Load data
     train_df, test_df = load_data(
         os.path.join("data", "featured", "train_featured.csv"),
         os.path.join("data", "featured", "test_featured.csv")
     )
     
-    # Prepare data
     X_train_processed, y_train, X_test_processed = prepare_data(train_df, test_df, preprocessor)
     
     # Start MLflow run for logging evaluation results
@@ -121,25 +113,11 @@ if __name__ == "__main__":
         for metric_name, metric_value in train_metrics.items():
             mlflow.log_metric(metric_name, metric_value)
         
-        # Generate feature importance
         
-        
-        # Generate test predictions (if applicable)
         test_predictions = model.predict(X_test_processed)
         
-        # Create submission dataframe
-        submission = pd.DataFrame({
-            'id': test_df['id'],
-            'Price': test_predictions
-        })
+
         
-        # Save submission file
-        submission_path = os.path.join("metrics", "predictions.csv")
-        submission.to_csv(submission_path, index=False)
-        mlflow.log_artifact(submission_path)
-        logger.info(f"Saved predictions to {submission_path}")
-        
-        # Save evaluation metrics
         metrics = {
             **train_metrics,
           
